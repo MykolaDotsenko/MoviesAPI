@@ -1,0 +1,55 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
+using MoviesAPI.Entities;
+
+namespace MoviesAPI.Controllers
+{
+    [Route("api/genres")]
+    [ApiController]
+    public class GenresController : ControllerBase
+    {
+        private readonly IOutputCacheStore outputCacheStore;
+        private const string cacheTag = "genres";
+
+        public GenresController(IOutputCacheStore outputCacheStore)
+        {
+            this.outputCacheStore = outputCacheStore;
+        }
+
+        [HttpGet]//api/genres
+        [OutputCache(Tags = [cacheTag])]
+        public List<Genre> Get()
+        {
+            return new List<Genre>
+            {
+                new Genre { Id = 1, Name = "Drama" },
+                new Genre { Id = 2, Name = "Action" },
+             };
+        }
+
+
+
+
+        [HttpGet("{id:int}")]   //api/genres/500
+        [OutputCache(Tags = [cacheTag])]
+        public async Task<ActionResult<Genre>> Post([FromBody] Genre genre)
+        {
+            await outputCacheStore.EvictByTagAsync(cacheTag, default);
+            throw new NotImplementedException();
+        }
+
+
+            
+        [HttpPut]
+        public void Put()
+        {
+
+        }
+
+        [HttpDelete]
+        public void Delete()
+        {
+
+        }
+    }
+}
