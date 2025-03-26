@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using MoviesAPI.Entities;
 
@@ -9,11 +10,13 @@ namespace MoviesAPI.Controllers
     public class GenresController : ControllerBase
     {
         private readonly IOutputCacheStore outputCacheStore;
+        private readonly ApplicationDbContext context;
         private const string cacheTag = "genres";
 
-        public GenresController(IOutputCacheStore outputCacheStore)
+        public GenresController(IOutputCacheStore outputCacheStore, ApplicationDbContext context)
         {
             this.outputCacheStore = outputCacheStore;
+            this.context = context;
         }
 
         [HttpGet]//api/genres
@@ -30,16 +33,22 @@ namespace MoviesAPI.Controllers
 
 
 
-        [HttpGet("{id:int}")]   //api/genres/500
+        [HttpGet("{id:int}", Name = "GetGenreById")]   //api/genres/500
         [OutputCache(Tags = [cacheTag])]
-        public async Task<ActionResult<Genre>> Post([FromBody] Genre genre)
+        public async Task<ActionResult<Genre>> Get(int id)
         {
-            await outputCacheStore.EvictByTagAsync(cacheTag, default);
             throw new NotImplementedException();
         }
 
+        [HttpPost]
+        public async Task<ActionResult> Post([FromBody] Genre genre)
+        {
+           context.Add(genre);
+            await context.SaveChangesAsync();
+            await outputCacheStore.EvictByTagAsync(cacheTag, default);
+            return CreatedAtRoute("GetGenreById", new { id = genre.Id }, genre);
+        }
 
-            
         [HttpPut]
         public void Put()
         {
