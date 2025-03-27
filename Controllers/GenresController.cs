@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using MoviesAPI.DTOs;
 using MoviesAPI.Entities;
 
 namespace MoviesAPI.Controllers
@@ -11,12 +13,16 @@ namespace MoviesAPI.Controllers
     {
         private readonly IOutputCacheStore outputCacheStore;
         private readonly ApplicationDbContext context;
+        private readonly IMapper mapper;
         private const string cacheTag = "genres";
 
-        public GenresController(IOutputCacheStore outputCacheStore, ApplicationDbContext context)
+        public GenresController(IOutputCacheStore outputCacheStore, ApplicationDbContext context,
+            IMapper mapper)
+
         {
             this.outputCacheStore = outputCacheStore;
             this.context = context;
+            this.mapper = mapper;
         }
 
         [HttpGet]//api/genres
@@ -41,12 +47,14 @@ namespace MoviesAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] Genre genre)
+        public async Task<CreatedAtRouteResult> Post([FromBody] GenreCreationDTO genreCreationDTO)
         {
-           context.Add(genre);
+            var genre = mapper.Map<Genre>(genreCreationDTO);
+            context.Add(genre);
             await context.SaveChangesAsync();
             await outputCacheStore.EvictByTagAsync(cacheTag, default);
-            return CreatedAtRoute("GetGenreById", new { id = genre.Id }, genre);
+            var genreDTO = mapper.Map<GenreDTO>(genre);
+            return CreatedAtRoute("GetGenreById", new { id = genreDTO.Id }, genreDTO);
         }
 
         [HttpPut]
