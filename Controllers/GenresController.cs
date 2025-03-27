@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using MoviesAPI.DTOs;
 using MoviesAPI.Entities;
 
@@ -27,13 +29,10 @@ namespace MoviesAPI.Controllers
 
         [HttpGet]//api/genres
         [OutputCache(Tags = [cacheTag])]
-        public List<Genre> Get()
+        public async Task<List<GenreDTO>> Get()
         {
-            return new List<Genre>
-            {
-                new Genre { Id = 1, Name = "Drama" },
-                new Genre { Id = 2, Name = "Action" },
-             };
+            return await context.Genres.ProjectTo<GenreDTO>(mapper.ConfigurationProvider).ToListAsync();
+
         }
 
 
@@ -54,7 +53,7 @@ namespace MoviesAPI.Controllers
             await context.SaveChangesAsync();
             await outputCacheStore.EvictByTagAsync(cacheTag, default);
             var genreDTO = mapper.Map<GenreDTO>(genre);
-            return CreatedAtRoute("GetGenreById", new { id = genreDTO.Id }, genreDTO);
+            return CreatedAtRoute("GetGenreById", new { id = genre.Id }, genreDTO);
         }
 
         [HttpPut]
