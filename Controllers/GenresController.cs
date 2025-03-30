@@ -35,6 +35,7 @@ namespace MoviesAPI.Controllers
             var queryable = context.Genres;
             await HttpContext.InsertPaginationParametersInHeader(queryable);
             return await queryable
+                .OrderBy(g => g.Name)
                 .Paginate(pagination)
                 .ProjectTo<GenreDTO>(mapper.ConfigurationProvider)
                 .ToListAsync();
