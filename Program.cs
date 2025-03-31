@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MoviesAPI;
+using MoviesAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +34,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("name=DefaultConnection"));
 
 builder.Services.AddAutoMapper(typeof(Program));
+
+builder.Services.AddTransient<IFileStorage, AzureFileStorage>();
 
 
 var app = builder.Build();
