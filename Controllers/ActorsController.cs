@@ -34,6 +34,7 @@ namespace MoviesAPI.Controllers
 if(actorCreationDTO.Picture is not null)
             {
                 var url = await fileStorage.Store(container, actorCreationDTO.Picture);
+                actor.Picture = url;
             }
 
                 context.Add(actor);
