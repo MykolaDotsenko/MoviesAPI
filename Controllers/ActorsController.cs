@@ -1,9 +1,12 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using MoviesAPI.DTOs;
 using MoviesAPI.Entities;
 using MoviesAPI.Services;
+using MoviesAPI.Utilities;
 
 namespace MoviesAPI.Controllers
 {
@@ -26,8 +29,36 @@ namespace MoviesAPI.Controllers
             this.fileStorage = fileStorage;
         }
 
+        [HttpGet]
+        [OutputCache(Tags = [cacheTag])]
+        public async Task<List<ActorDTO>> Get([FromQuery] PaginationDTO pagination)
+        {
+            var queryable = context.Actors;
+            await HttpContext.InsertPaginationParametersInHeader(queryable);
+            return await queryable
+                .OrderBy(a => a.Name)
+                .Paginate(pagination)
+                .ProjectTo<ActorDTO>(mapper.ConfigurationProvider)
+                .ToListAsync();
+        }
+
+        [HttpGet("{id:int}", Name = "GetActorById")]
+        [OutputCache(Tags = [cacheTag])]
+        public async Task<ActionResult<ActorDTO>> Get(int id)
+        {
+           var actor = await context.Actors
+                .ProjectTo<ActorDTO>(mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(a => a.Id == id);
+            if (actor is null)
+            {
+                return NotFound();
+            }
+            return actor;
+        }
+
+
         [HttpPost]
-        public async Task<IActionResult> Post([FromForm] ActorCreationDTO actorCreationDTO)
+        public async Task<CreatedAtRouteResult> Post([FromForm] ActorCreationDTO actorCreationDTO)
         {
             var actor = mapper.Map<Actor>(actorCreationDTO);
 
@@ -40,7 +71,8 @@ if(actorCreationDTO.Picture is not null)
                 context.Add(actor);
             await context.SaveChangesAsync();
             await outputCacheStore.EvictByTagAsync(cacheTag, default);
-            return Ok();
+            var actorDTO = mapper.Map<ActorDTO>(actor);
+            return CreatedAtRoute("GetActorById", new {id=actor.Id}, actorDTO);
         }
     }
 }

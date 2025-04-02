@@ -16,6 +16,8 @@ namespace MoviesAPI.Utilities
         {
             CreateMap<ActorCreationDTO, Actor>()
                 .ForMember(x => x.Picture, options => options.Ignore());
+
+            CreateMap<Actor, ActorDTO>();
         }
 
         private void ConfigureGenres()
