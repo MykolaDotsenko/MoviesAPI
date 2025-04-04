@@ -92,5 +92,19 @@ if(actorCreationDTO.Picture is not null)
             await outputCacheStore.EvictByTagAsync(cacheTag, default);
             return NoContent();
         }
-    }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var actor = await context.Actors.FirstOrDefaultAsync(a => a.Id == id);
+            if (actor is null)
+            {
+                return NotFound();
+            }
+            context.Remove(actor);
+            await context.SaveChangesAsync();
+            await outputCacheStore.EvictByTagAsync(cacheTag, default);
+            await fileStorage.Delete(actor.Picture, container);
+            return NoContent();
+        }
 }
