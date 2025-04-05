@@ -29,5 +29,19 @@ namespace MoviesAPI.Controllers
                 .ProjectTo<TDTO>(mapper.ConfigurationProvider)
                 .ToListAsync();
         }
+
+        protected async Task<ActionResult<TDTO>> Get<TEntity, TDTO>(int id)
+            where TEntity : class
+            where TDTO : IId
+        {
+            var entity = await context.Set<TEntity>()
+                .ProjectTo<TDTO>(mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(e => e.Id == id);
+            if (entity is null)
+            {
+                return NotFound();
+            }
+            return entity;
+        }
     }
 }
