@@ -11,6 +11,19 @@ namespace MoviesAPI.Utilities
         {
             ConfigureGenres();
             ConfigureActors();
+            ConfigureTheaters(geometryFactory);
+        }
+
+        private void ConfigureTheaters(GeometryFactory geometryFactory)
+        {
+            CreateMap<Theater, TheaterDTO>()
+                .ForMember(x => x.Latitude, x => x.MapFrom(p => p.Location.Y))
+                .ForMember(x => x.Longitude, x => x.MapFrom(p => p.Location.X));
+
+
+            CreateMap<TheaterCreationDTO, Theater>()
+                .ForMember(entity => entity.Location, dto => dto.MapFrom(p =>
+                    geometryFactory.CreatePoint(new Coordinate(p.Longitude, p.Latitude))));
         }
 
         private void ConfigureActors()
