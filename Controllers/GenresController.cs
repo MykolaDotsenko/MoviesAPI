@@ -12,7 +12,7 @@ namespace MoviesAPI.Controllers
 {
     [Route("api/genres")]
     [ApiController]
-    public class GenresController : ControllerBase
+    public class GenresController : CustomBaseController
     {
         private readonly IOutputCacheStore outputCacheStore;
         private readonly ApplicationDbContext context;
@@ -21,7 +21,7 @@ namespace MoviesAPI.Controllers
 
         public GenresController(IOutputCacheStore outputCacheStore, ApplicationDbContext context,
             IMapper mapper)
-
+            : base(context, mapper)
         {
             this.outputCacheStore = outputCacheStore;
             this.context = context;
@@ -32,14 +32,7 @@ namespace MoviesAPI.Controllers
         [OutputCache(Tags = [cacheTag])]
         public async Task<List<GenreDTO>> Get([FromQuery] PaginationDTO pagination)
         {
-            var queryable = context.Genres;
-            await HttpContext.InsertPaginationParametersInHeader(queryable);
-            return await queryable
-                .OrderBy(g => g.Name)
-                .Paginate(pagination)
-                .ProjectTo<GenreDTO>(mapper.ConfigurationProvider)
-                .ToListAsync();
-
+            return await Get<Genre, GenreDTO>(pagination, orderBy: g => g.Name);
         }
 
 
