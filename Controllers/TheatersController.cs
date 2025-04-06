@@ -6,14 +6,16 @@ using MoviesAPI.Entities;
 
 namespace MoviesAPI.Controllers
 {
-    public class TheatersController: CustomBaseController
+    [Route("api/theaters")]
+    [ApiController]
+    public class TheatersController : CustomBaseController
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
         private readonly IOutputCacheStore outputCacheStore;
         private const string cacheTag = "theaters";
 
-        public TheatersController (ApplicationDbContext context, IMapper mapper,
+        public TheatersController(ApplicationDbContext context, IMapper mapper,
             IOutputCacheStore outputCacheStore)
             : base(context, mapper, outputCacheStore, cacheTag)
         {

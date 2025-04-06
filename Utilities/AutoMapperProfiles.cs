@@ -23,7 +23,8 @@ namespace MoviesAPI.Utilities
 
             CreateMap<TheaterCreationDTO, Theater>()
                 .ForMember(entity => entity.Location, dto => dto.MapFrom(p =>
-                    geometryFactory.CreatePoint(new Coordinate(p.Longitude, p.Latitude))));
+                    geometryFactory.CreatePoint(new Coordinate(p.Longitude, p.Latitude
+                    ))));
         }
 
         private void ConfigureActors()
