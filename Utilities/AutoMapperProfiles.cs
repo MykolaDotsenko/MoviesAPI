@@ -52,7 +52,9 @@ namespace MoviesAPI.Utilities
                 .ForMember(x => x.Picture, options => options.Ignore());
 
             CreateMap<Actor, ActorDTO>();
-        }
+
+            CreateMap<Actor, MovieActorDTO>();
+                        }
 
         private void ConfigureGenres()
         { 
