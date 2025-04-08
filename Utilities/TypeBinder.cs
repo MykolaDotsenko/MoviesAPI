@@ -18,8 +18,8 @@ namespace MoviesAPI.Utilities
             try
             {
                 var destinationType = bindingContext.ModelMetadata.ModelType;
-                var deserializedValue = JsonSerializer.Deserialize(value.FirstValue!, 
-                    destinationType, new JsonSerializerOptions { PropertyNameCaseInsensitive = true});
+                var deserializedValue = JsonSerializer.Deserialize(value.FirstValue!,
+                    destinationType, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 bindingContext.Result = ModelBindingResult.Success(deserializedValue);
             }
             catch
@@ -28,4 +28,5 @@ namespace MoviesAPI.Utilities
             }
             return Task.CompletedTask;
         }
+    }
 }
