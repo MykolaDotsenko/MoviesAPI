@@ -29,10 +29,48 @@ namespace MoviesAPI.Controllers
         }
 
 
-        [HttpGet("{id:int}", Name = "GetMovieById")]
-        public IActionResult Get(int id)
+
+        [HttpGet("landing")]
+        public async Task<ActionResult<LandingDTO>> Get()
         {
-            throw new NotImplementedException();
+            var today = DateTime.Today;
+            var top = 6;
+
+            var upcomingReleases = await context.Movies
+                .Where(m => m.ReleaseDate > today)
+                .OrderBy(m => m.ReleaseDate)
+                .Take(top)
+                .ProjectTo<MovieDTO>(mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var inTheaters = await context.Movies
+                .Where(m => m.MoviesTheaters.Select(mt => mt.MovieId).Contains(m.Id))
+                .OrderBy(m => m.ReleaseDate)
+                .Take(top)
+                .ProjectTo<MovieDTO>(mapper.ConfigurationProvider)
+                .ToListAsync();
+
+            var result = new LandingDTO();
+            result.InTheaters = inTheaters;
+            result.UpcomingReleases = upcomingReleases;
+            return result;
+        }
+
+
+
+        [HttpGet("{id:int}", Name = "GetMovieById")]
+        public async Task<ActionResult<MovieDetailsDTO>> Get(int id)
+        {
+            var movie = await context.Movies
+                .ProjectTo<MovieDetailsDTO>(mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (movie is null)
+            {
+                return NotFound();
+            }
+            return movie;
+
         }
 
 
