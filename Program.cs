@@ -38,6 +38,8 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("name=DefaultConnection",
     sqlServer => sqlServer.UseNetTopologySuite()));
 
@@ -51,8 +53,7 @@ builder.Services.AddSingleton(provider => new MapperConfiguration(config =>
 }).CreateMapper());
 
 builder.Services.AddTransient<IFileStorage, AzureFileStorage>();
-
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IUsersService, UsersService>();
 
 builder.Services.AddIdentityCore<IdentityUser>()
     .AddEntityFrameworkStores<ApplicationDbContext>()

@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
@@ -12,27 +14,31 @@ namespace MoviesAPI.Controllers
 {
     [ApiController]
     [Route("api/movies")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class MoviesController : ControllerBase
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
         private readonly IOutputCacheStore outputCacheStore;
         private readonly IFileStorage fileStorage;
+        private readonly IUsersService usersService;
         private const string cacheTag = "movies";
         private readonly string container = "movies";
 
-        public MoviesController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore, IFileStorage fileStorage)
+        public MoviesController(ApplicationDbContext context, IMapper mapper, IOutputCacheStore outputCacheStore, IFileStorage fileStorage, IUsersService usersService)
         {
             this.context = context;
             this.mapper = mapper;
             this.outputCacheStore = outputCacheStore;
             this.fileStorage = fileStorage;
+            this.usersService = usersService;
         }
 
 
 
         [HttpGet("landing")]
         [OutputCache(Tags = [cacheTag])]
+        [AllowAnonymous]
         public async Task<ActionResult<LandingDTO>> Get()
         {
             var today = DateTime.Today;
@@ -62,6 +68,7 @@ namespace MoviesAPI.Controllers
 
         [HttpGet("{id:int}", Name = "GetMovieById")]
         [OutputCache(Tags = [cacheTag])]
+        [AllowAnonymous]
         public async Task<ActionResult<MovieDetailsDTO>> Get(int id)
         {
             var movie = await context.Movies
@@ -72,12 +79,46 @@ namespace MoviesAPI.Controllers
             {
                 return NotFound();
             }
+
+
+            var averageRate = 0.0;
+            var userVote = 0;
+
+            var movieHasBeenRated = await context.MovieRatings
+                .AnyAsync(mr => mr.MovieId == id);
+
+            if (movieHasBeenRated)
+            {
+                averageRate = await context.MovieRatings
+                    .Where(mr => mr.MovieId == id)
+                    .AverageAsync(mr => mr.Rate);
+
+                if(HttpContext.User.Identity!.IsAuthenticated)
+                {
+                    var userId = await usersService.GetUserId();
+                    var ratingDB = await context.MovieRatings
+                        .FirstOrDefaultAsync(mr => mr.MovieId == id && mr.UserId == userId);
+
+
+                    if (ratingDB is not null)
+                    {
+                        userVote = ratingDB.Rate;
+                    }
+                }
+                
+            }
+
+
+            movie.AverageRate = averageRate;
+            movie.UserVote = userVote;
+
             return movie;
 
         }
 
 
         [HttpGet("filter")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<MovieDTO>>> Filter([FromQuery] MoviesFilterDTO moviesFilterDTO)
         {
             var moviesQueryable = context.Movies.AsQueryable();
