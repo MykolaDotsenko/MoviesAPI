@@ -1,6 +1,8 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +12,7 @@ namespace MoviesAPI.Controllers
 {
     [ApiController]
     [Route("api/users")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isadmin")]
     public class UsersController:ControllerBase
     {
         private readonly UserManager<IdentityUser> userManager;
@@ -25,6 +28,7 @@ namespace MoviesAPI.Controllers
 
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthenticationResponseDTO>> Register(UserCredentialsDTO userCredentialsDTO)
         {
             var user = new IdentityUser { UserName = userCredentialsDTO.Email, Email = userCredentialsDTO.Email };
@@ -41,6 +45,7 @@ namespace MoviesAPI.Controllers
 
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<ActionResult<AuthenticationResponseDTO>> Login(UserCredentialsDTO userCredentialsDTO)
         {
             var user = await userManager.FindByEmailAsync(userCredentialsDTO.Email);
@@ -64,6 +69,35 @@ namespace MoviesAPI.Controllers
                 return BadRequest(errors);
             }
         }
+
+        [HttpPost("makeadmin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> MakeAdmin(EditClaimDTO editClaimDTO)
+        {
+            var user = await userManager.FindByEmailAsync(editClaimDTO.Email);
+            if (user is null)
+            {
+                return NotFound();
+            }
+            await userManager.AddClaimAsync(user, new Claim("isadmin", "true"));
+            return NoContent();
+        }
+
+
+
+        [HttpPost("removeadmin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RemoveAdmin(EditClaimDTO editClaimDTO)
+        {
+            var user = await userManager.FindByEmailAsync(editClaimDTO.Email);
+            if (user is null)
+            {
+                return NotFound();
+            }
+            await userManager.RemoveClaimAsync(user, new Claim("isadmin", "true"));
+            return NoContent();
+        }
+
 
         private IEnumerable<IdentityError> BuildIncorrectLoginErrorMessage()
         {
