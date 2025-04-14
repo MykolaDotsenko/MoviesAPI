@@ -42,8 +42,7 @@ namespace MoviesAPI.Controllers
 
         [HttpGet("usersList")]
         [OutputCache(Tags = [cacheTag])]
-        [AllowAnonymous]
-        public async Task<ActionResult<List<UserDTO>>> GetUsers ([FromQuery] PaginationDTO paginationDTO)
+           public async Task<ActionResult<List<UserDTO>>> GetUsers ([FromQuery] PaginationDTO paginationDTO)
         {
             return await Get<IdentityUser, UserDTO>(paginationDTO, orderBy: u => u.Email!);
         }
@@ -95,7 +94,7 @@ namespace MoviesAPI.Controllers
         }
 
         [HttpPost("makeadmin")]
-        [AllowAnonymous]
+        
         public async Task<IActionResult> MakeAdmin(EditClaimDTO editClaimDTO)
         {
             var user = await userManager.FindByEmailAsync(editClaimDTO.Email);
@@ -110,7 +109,7 @@ namespace MoviesAPI.Controllers
 
 
         [HttpPost("removeadmin")]
-        [AllowAnonymous]
+       
         public async Task<IActionResult> RemoveAdmin(EditClaimDTO editClaimDTO)
         {
             var user = await userManager.FindByEmailAsync(editClaimDTO.Email);
