@@ -1,10 +1,12 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.IdentityModel.Tokens;
 using MoviesAPI.DTOs;
 
@@ -13,18 +15,39 @@ namespace MoviesAPI.Controllers
     [ApiController]
     [Route("api/users")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "isadmin")]
-    public class UsersController:ControllerBase
+    public class UsersController:CustomBaseController
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly SignInManager<IdentityUser> signInManager;
         private readonly IConfiguration configuration;
+        private readonly ApplicationDbContext context;
+        private readonly IOutputCacheStore outputCacheStore;
+        private readonly IMapper mapper;
+        private const string cacheTag = "users";
 
-        public UsersController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuration)
+        public UsersController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager,
+            IConfiguration configuration, ApplicationDbContext context, IOutputCacheStore outputCacheStore,
+            IMapper mapper)
+            : base(context, mapper, outputCacheStore, cacheTag)
         {
             this.userManager = userManager;
             this.signInManager = signInManager;
             this.configuration = configuration;
+            this.context = context;
+            this.outputCacheStore = outputCacheStore;
+            this.mapper = mapper;
         }
+
+
+
+        [HttpGet("usersList")]
+        [OutputCache(Tags = [cacheTag])]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<UserDTO>>> GetUsers ([FromQuery] PaginationDTO paginationDTO)
+        {
+            return await Get<IdentityUser, UserDTO>(paginationDTO, orderBy: u => u.Email!);
+        }
+
 
 
         [HttpPost("register")]
@@ -35,6 +58,7 @@ namespace MoviesAPI.Controllers
             var result = await userManager.CreateAsync(user, userCredentialsDTO.Password);
             if (result.Succeeded)
             {
+                await outputCacheStore.EvictByTagAsync(cacheTag, default);
                 return await BuildToken(user);
             }
             else

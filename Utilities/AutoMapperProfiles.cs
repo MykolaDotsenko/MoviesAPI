@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using MoviesAPI.DTOs;
 using MoviesAPI.Entities;
 using NetTopologySuite.Geometries;
@@ -13,6 +14,13 @@ namespace MoviesAPI.Utilities
             ConfigureActors();
             ConfigureTheaters(geometryFactory);
             ConfigureMovies();
+            ConfigureUsers();
+        }
+
+        private void ConfigureUsers()
+        {
+            CreateMap<IdentityUser, UserDTO>();
+               
         }
 
 
